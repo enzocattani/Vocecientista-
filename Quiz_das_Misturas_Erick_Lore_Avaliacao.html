@@ -1,0 +1,851 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Quiz das Misturas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+  /* Layout: one centered column (max 720px). A test-tube progress bar sits above a single question card; the result screen ends with a review list of missed questions. */
+  :root {
+    --bg: #E9F0F2;
+    --surface: #FFFFFF;
+    --surface-2: #F1F6F7;
+    --ink: #10262E;
+    --muted: #4F656D;
+    --line: #C6D5DA;
+    --accent: #0A7C9C;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #D6EDF4;
+    --liquid: #19A5C7;
+    --amber: #8A5A00;
+    --amber-bg: #FCEFCB;
+    --good: #0F7A55;
+    --good-bg: #DCF3EA;
+    --bad: #B42D45;
+    --bad-bg: #FBE3E8;
+    --font-display: 'Fredoka', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0B181E;
+      --surface: #12262E;
+      --surface-2: #173038;
+      --ink: #E4F0F3;
+      --muted: #9DB4BC;
+      --line: #27434D;
+      --accent: #4CC3E6;
+      --accent-ink: #06232C;
+      --accent-soft: #17414E;
+      --liquid: #3AB5D8;
+      --amber: #F2B83A;
+      --amber-bg: #3A2D0C;
+      --good: #4FD1A0;
+      --good-bg: #12362B;
+      --bad: #FF8196;
+      --bad-bg: #3A1C25;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0B181E;
+    --surface: #12262E;
+    --surface-2: #173038;
+    --ink: #E4F0F3;
+    --muted: #9DB4BC;
+    --line: #27434D;
+    --accent: #4CC3E6;
+    --accent-ink: #06232C;
+    --accent-soft: #17414E;
+    --liquid: #3AB5D8;
+    --amber: #F2B83A;
+    --amber-bg: #3A2D0C;
+    --good: #4FD1A0;
+    --good-bg: #12362B;
+    --bad: #FF8196;
+    --bad-bg: #3A1C25;
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    padding-block: 20px 48px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.2; }
+  p { margin: 0; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .muted { color: var(--muted); }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+  .card:focus { outline: none; }
+
+  /* Buttons */
+  button { font-family: inherit; font-size: inherit; color: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .btn {
+    background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 12px;
+    min-height: 48px; padding: 12px 22px; font-weight: 800; font-size: 17px; width: 100%;
+  }
+  .btn:hover { filter: brightness(1.06); }
+  .btn.ghost { background: var(--surface); color: var(--ink); border: 2px solid var(--line); }
+  .btn.ghost:hover { border-color: var(--accent); filter: none; }
+  .linkbtn { background: none; border: 0; padding: 6px 4px; color: var(--muted); font-weight: 700; text-decoration: underline; min-height: 32px; }
+
+  /* Start screen */
+  .hero { display: flex; gap: 16px; align-items: center; }
+  .hero svg { flex: none; }
+  .hero h1 { font-size: clamp(30px, 8vw, 44px); font-weight: 700; }
+  .hero p { color: var(--muted); font-weight: 600; }
+  .greet { font-size: 18px; font-weight: 700; }
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+  .choice {
+    text-align: left; background: var(--surface); border: 2px solid var(--line); border-radius: 14px;
+    padding: 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0;
+  }
+  .choice strong { font-family: var(--font-display); font-size: 19px; font-weight: 600; }
+  .choice span { color: var(--muted); font-size: 14px; font-weight: 600; }
+  .choice[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .choice:hover { border-color: var(--accent); }
+  .seg { display: flex; flex-wrap: wrap; gap: 8px; }
+  .seg button {
+    background: var(--surface); border: 2px solid var(--line); border-radius: 999px;
+    min-height: 44px; padding: 8px 18px; font-weight: 800;
+  }
+  .seg button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .best { font-weight: 700; color: var(--muted); font-size: 14px; }
+
+  /* Guide */
+  details.guide summary { font-family: var(--font-display); font-size: 19px; font-weight: 600; cursor: pointer; min-height: 32px; }
+  details.guide[open] summary { margin-bottom: 12px; }
+  .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+  .gitem { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .gitem b { font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+  .gitem span { font-size: 14px; color: var(--muted); font-weight: 600; }
+  .gitem em { font-style: normal; font-size: 14px; font-weight: 700; color: var(--accent); }
+
+  /* Quiz HUD */
+  .hud { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .count { font-family: var(--font-display); font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .hud-r { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .score { font-weight: 800; font-variant-numeric: tabular-nums; }
+  .pill { background: var(--amber-bg); color: var(--amber); border-radius: 999px; padding: 2px 10px; font-weight: 800; font-size: 14px; }
+  .lives { display: flex; gap: 2px; }
+  .tube {
+    height: 18px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface-2); overflow: hidden;
+  }
+  .tube i {
+    display: block; height: 100%; border-radius: 999px; background-color: var(--liquid);
+    background-image:
+      radial-gradient(circle at 25% 55%, rgba(255,255,255,.55) 2px, transparent 3px),
+      radial-gradient(circle at 70% 40%, rgba(255,255,255,.4) 1.5px, transparent 2.5px);
+    background-size: 26px 100%;
+    transition: width .45s ease;
+  }
+  .timer { display: flex; align-items: center; gap: 10px; }
+  .timer .track { flex: 1; height: 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+  .timer .bar { height: 100%; background: var(--accent); }
+  .timer .bar.low { background: var(--bad); }
+  .timer b { font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right; }
+
+  /* Question */
+  .qtext { font-size: clamp(21px, 5.2vw, 27px); font-weight: 600; margin-top: 6px; }
+  .opts { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+  .opt {
+    display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: center; text-align: left;
+    background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px;
+    font-weight: 700; min-height: 56px; min-width: 0;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+  .opt:disabled { cursor: default; color: var(--ink); opacity: 1; }
+  .chip {
+    width: 34px; height: 34px; border-radius: 10px; background: var(--surface-2); display: grid; place-items: center;
+    font-family: var(--font-display); font-weight: 600; font-size: 17px;
+  }
+  .opt.ok { border-color: var(--good); background: var(--good-bg); }
+  .opt.ok .chip { background: var(--good); color: var(--bg); }
+  .opt.bad { border-color: var(--bad); background: var(--bad-bg); }
+  .opt.bad .chip { background: var(--bad); color: var(--bg); }
+  .opt.dim { opacity: .75; }
+  .fb { border-radius: 14px; padding: 14px 16px; margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .fb.good { background: var(--good-bg); }
+  .fb.bad { background: var(--bad-bg); }
+  .fb-title { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+  .fb.good .fb-title { color: var(--good); }
+  .fb.bad .fb-title { color: var(--bad); }
+  .next { margin-top: 16px; }
+
+  /* Result */
+  .rank { font-size: clamp(28px, 7vw, 38px); font-weight: 700; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 16px; }
+  .stat { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; }
+  .stat b { font-family: var(--font-display); font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 13px; font-weight: 700; color: var(--muted); }
+  .review { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 12px; }
+  .review li { background: var(--surface-2); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .review .rq { font-weight: 800; }
+  .review .ra { color: var(--good); font-weight: 800; }
+  .review .re { color: var(--muted); font-size: 15px; font-weight: 600; }
+  .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+  .foot { text-align: center; font-size: 13px; color: var(--muted); font-weight: 600; }
+
+
+  /* Erick: lore, profile and long-term assessment */
+  .lore { background: linear-gradient(135deg, var(--surface), var(--accent-soft)); border: 1px solid var(--line); }
+  .lore h2 { font-size: 24px; margin: 4px 0 8px; }
+  .lore-quote { font-family: var(--font-display); font-size: 18px; font-weight: 600; }
+  .profile-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .grade { font-family:var(--font-display); font-size:clamp(38px,10vw,54px); line-height:1; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; }
+  .grade-track { height:12px; border-radius:99px; background:var(--surface-2); border:1px solid var(--line); overflow:hidden; }
+  .grade-track i { display:block; height:100%; background:var(--liquid); border-radius:99px; }
+  .profile-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:9px; }
+  .profile-stat { background:var(--surface-2); border-radius:12px; padding:11px 12px; }
+  .profile-stat b { display:block; font:600 23px var(--font-display); font-variant-numeric:tabular-nums; }
+  .profile-stat span { color:var(--muted); font-size:12px; font-weight:800; }
+  .mastery { display:flex; flex-direction:column; gap:8px; }
+  .mastery-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; font-size:14px; font-weight:800; }
+  .mastery-row .grade-track { grid-column:1 / -1; height:8px; }
+  .status-note { border-radius:12px; padding:12px 14px; background:var(--amber-bg); color:var(--amber); font-weight:700; }
+  .status-note.good { background:var(--good-bg); color:var(--good); }
+  .status-note.bad { background:var(--bad-bg); color:var(--bad); }
+  .chapter { display:flex; gap:10px; align-items:flex-start; }
+  .chapter b { display:block; font-family:var(--font-display); font-size:17px; }
+  .chapter small { color:var(--muted); font-weight:700; }
+  .medal { font-size:27px; line-height:1; }
+
+  @media (prefers-reduced-motion: reduce) { .tube i { transition: none; } }
+</style>
+
+<main class="wrap" id="app" aria-live="off"></main>
+
+<script>
+(function () {
+  "use strict";
+
+  var C_M = "Métodos de separação";
+  var C_A = "Aplicações da Química";
+
+  // [categoria, pergunta, resposta certa, errada, errada, errada, explicação]
+  var RAW = [
+    [C_M, "Qual destas NÃO é uma razão para separar misturas?",
+      "Deixar tudo sempre misturado para facilitar o armazenamento",
+      "Obter substâncias mais puras", "Reciclar materiais", "Produzir novos materiais, como medicamentos",
+      "O livro cita obter substâncias mais puras, reciclagem, produção de novos materiais e a melhoria de alimentos, como filtrar o café."],
+    [C_M, "Você espalhou feijões na mesa e quer tirar as pedrinhas com as mãos ou com uma pinça. Que método está usando?",
+      "Catação", "Peneiração", "Filtração", "Decantação",
+      "A catação separa objetos que você consegue ver e pegar com facilidade, com as mãos ou com uma ferramenta como a pinça."],
+    [C_M, "Para separar amendoins das cascas, você despeja tudo num recipiente largo e raso e sopra. Que método é esse?",
+      "Ventilação", "Levigação", "Centrifugação", "Evaporação",
+      "A casca é mais leve e é deslocada pelo ar. O amendoim, mais pesado, fica no recipiente."],
+    [C_M, "Areia fina misturada com muitas pedrinhas. Que método usa uma peneira e se baseia na diferença de tamanho?",
+      "Peneiração (tamisação)", "Ventilação", "Filtração", "Separação magnética",
+      "A areia fina atravessa os furos da peneira e as pedrinhas maiores ficam retidas."],
+    [C_M, "No café coado, a água quente passa pelo filtro com o pó de café. Que método separa o líquido das partes sólidas?",
+      "Filtração", "Decantação", "Destilação", "Ventilação",
+      "O líquido passa pelo filtro e as partes sólidas ficam retidas. No laboratório são usados papel de filtro, funil e erlenmeyer."],
+    [C_M, "A peneiração é usada para separar apenas…",
+      "compostos sólidos", "sólidos de líquidos", "líquidos de gases", "gases de líquidos",
+      "Cuidado para não confundir: a filtração separa sólidos de líquidos (ou, às vezes, de gases). A peneiração separa só sólidos entre si."],
+    [C_M, "Num dia de chuva, a água leva as folhas, mas as pedras ficam no lugar. Que método de separação acontece?",
+      "Levigação", "Ventilação", "Fusão fracionada", "Cristalização",
+      "A levigação separa sólidos de densidades diferentes: o menos denso é arrastado pela água e o mais denso fica no fundo."],
+    [C_M, "Na separação de areia e ouro por levigação, o que é levado pela corrente de água?",
+      "A areia, que é mais leve", "O ouro, que é mais leve", "O ouro, porque se dissolve na água", "Os dois, na mesma velocidade",
+      "O ouro é mais pesado (mais denso) e fica no fundo do recipiente."],
+    [C_M, "Pó de ferro (limalha) misturado com areia. Qual método usa um ímã para separar os dois?",
+      "Separação magnética", "Decantação", "Peneiração", "Dissolução fracionada",
+      "O ímã atrai o ferro. A areia não é atraída."],
+    [C_A, "Na reciclagem do lixo eletrônico, qual método pode separar o ferro dos demais componentes?",
+      "Separação magnética", "Evaporação", "Ventilação", "Destilação simples",
+      "O ferro é atraído por ímãs. Plástico, vidro e madeira não são."],
+    [C_M, "Um copo com água e terra fica parado. A terra vai para o fundo e você inclina o copo para derramar só a água. Qual método é esse?",
+      "Decantação", "Filtração", "Evaporação", "Centrifugação",
+      "A terra é mais densa e se deposita no fundo. A decantação separa sólidos de líquidos, ou líquidos diferentes, pela densidade."],
+    [C_M, "Em um derramamento de óleo no mar, o óleo fica na superfície e pode ser contido por boias. Por que ele flutua?",
+      "Porque tem menor densidade que a água", "Porque se dissolve na água", "Porque tem maior densidade que a água", "Porque evapora na hora",
+      "Por ter menor densidade, o óleo flutua. Métodos como a decantação ajudam a reduzir os danos."],
+    [C_M, "Por que o sangue não é separado por decantação nos exames de laboratório?",
+      "Porque coagula muito rápido fora do corpo", "Porque é uma substância pura", "Porque é um gás", "Porque a decantação só funciona com ímãs",
+      "Fora do corpo, o sangue vira quase sólido rapidamente. Por isso usa-se a centrifugação."],
+    [C_M, "O que acontece com as partículas mais densas quando a centrífuga gira rápido?",
+      "São empurradas para o fundo do recipiente", "Sobem para a superfície", "Evaporam", "Ficam paradas no centro",
+      "A centrifugação segue o princípio da decantação, mas usa a rotação para aumentar o efeito e acelerar o processo."],
+    [C_M, "A máquina de lavar gira o tambor em alta velocidade para tirar a água das roupas. Qual método de separação é esse?",
+      "Centrifugação", "Filtração", "Evaporação", "Levigação",
+      "A rotação força a saída da água das fibras do tecido."],
+    [C_M, "Um copo de água com sal ficou ao Sol até a água sumir, e só o sal ficou no fundo. Qual método foi usado?",
+      "Evaporação", "Decantação", "Catação", "Separação magnética",
+      "A evaporação serve para misturas homogêneas: o líquido evapora e só o que estava dissolvido fica, no estado sólido."],
+    [C_M, "Nas salinas, o que acontece quando a água evapora até o ponto de saturação?",
+      "Os cristais de sal se formam e se acumulam no fundo", "O sal evapora junto com a água", "O sal vira líquido", "A água se transforma em sal",
+      "É a cristalização. Depois o sal é colhido, lavado, seco e embalado."],
+    [C_M, "Depois do treino, a camiseta fica com cristais brancos de suor seco. Que processo explica isso?",
+      "Evaporação da água e cristalização do sal", "Filtração do suor pelo tecido", "Fusão do sal", "Ventilação do suor",
+      "O suor é composto de água e sais. A água evapora e os sais cristalizam no tecido."],
+    [C_M, "Qual método separa sólidos de pontos de fusão diferentes, aquecendo até que só um deles derreta?",
+      "Fusão fracionada", "Destilação simples", "Dissolução fracionada", "Levigação",
+      "Ponto de fusão é a temperatura em que a substância passa do estado sólido para o líquido. No exemplo do livro, o enxofre derrete e a areia continua sólida."],
+    [C_A, "Uma liga de chumbo e estanho precisa ser separada para reciclagem. Por que a fusão fracionada funciona?",
+      "Os dois metais têm pontos de fusão diferentes", "Os dois metais têm o mesmo ponto de fusão", "Um deles se dissolve em água", "Os dois são líquidos em temperatura ambiente",
+      "Ao aquecer, o metal de menor ponto de fusão derrete primeiro e se separa do outro, que continua sólido."],
+    [C_M, "Para separar areia e sal, você coloca a mistura em água. O que acontece?",
+      "O sal se dissolve e a areia não", "A areia se dissolve e o sal não", "Os dois se dissolvem", "Nenhum dos dois se dissolve",
+      "Depois é só filtrar: a areia fica no filtro e a água com sal passa. Esse método é a dissolução fracionada."],
+    [C_M, "Depois de filtrar a mistura de areia, sal e água, como recuperar o sal que está dissolvido na água?",
+      "Evaporando a água", "Usando um ímã", "Peneirando", "Catando com uma pinça",
+      "Com a evaporação, a água vira vapor e o sal fica no estado sólido."],
+    [C_M, "Na destilação simples da água do mar, o que fica retido no balão de destilação?",
+      "O sal", "A água líquida", "O vapor de água", "O ar",
+      "A água vira vapor, passa pelo condensador, volta a ser líquida e é recolhida em um frasco. O sal fica no balão."],
+    [C_M, "Qual é a função do condensador na destilação?",
+      "Resfriar o vapor para que ele volte a ser líquido", "Aquecer a mistura", "Filtrar o sal", "Medir a temperatura",
+      "Água de resfriamento circula pelo condensador, e o vapor se transforma em líquido novamente."],
+    [C_M, "Água e álcool etílico formam uma mistura homogênea de líquidos com pontos de ebulição próximos. Qual método usar?",
+      "Destilação fracionada", "Destilação simples", "Decantação", "Filtração",
+      "Os líquidos são destilados separadamente, conforme cada temperatura de ebulição é atingida."],
+    [C_M, "O éter etílico ferve a 34,6 °C e a acetona a 56,0 °C. Na destilação fracionada, qual deles é destilado primeiro?",
+      "O éter, que tem menor ponto de ebulição", "A acetona, que tem menor ponto de ebulição", "Os dois ao mesmo tempo", "Nenhum, porque são miscíveis e não dá para separar",
+      "O líquido com menor temperatura de ebulição é destilado antes do que tem maior."],
+    [C_M, "O que a destilação fracionada usa e a destilação simples NÃO usa?",
+      "Coluna de fracionamento e termômetro", "Condensador", "Balão de destilação", "Fonte de calor",
+      "A coluna de fracionamento permite uma separação mais refinada e precisa."],
+    [C_A, "Qual método é usado no refino do petróleo para separar gasolina e diesel?",
+      "Destilação fracionada", "Destilação simples", "Peneiração", "Catação",
+      "Cada componente vira vapor em uma temperatura diferente, sobe pela torre, esfria e volta a ser líquido em alturas diferentes."],
+    [C_M, "Ao fazer chá com folhas na água fervendo, que método separa as folhas do líquido quando você coa?",
+      "Filtração", "Levigação", "Fusão fracionada", "Centrifugação",
+      "A água quente extrai as substâncias das folhas e o coador retém as partes sólidas."],
+    [C_M, "O leite é água com partículas líquidas e sólidas que não se dissolvem completamente. Como ele é classificado?",
+      "Mistura heterogênea (um coloide)", "Mistura homogênea", "Substância simples", "Substância pura",
+      "As partículas ficam distribuídas, mas não dissolvidas. Por isso o vinagre consegue agrupá-las em flocos que afundam, como na coalhada."],
+    [C_A, "Qual método simples pode ser usado para dessalinizar a água do mar e obter água doce?",
+      "Destilação simples", "Peneiração", "Catação", "Separação magnética",
+      "A água evapora, condensa e é recolhida. O sal fica no balão."],
+    [C_A, "O que é um material sintético?",
+      "Um material que não é encontrado na natureza e é produzido por processos químicos", "Um material retirado da natureza sem nenhuma alteração", "Um material que nunca passou por processo químico", "Um material feito só de metal",
+      "Materiais sintéticos são produzidos em indústrias e laboratórios para reproduzir, substituir ou melhorar materiais naturais."],
+    [C_A, "Qual é um ponto negativo dos materiais sintéticos?",
+      "Muitos, como o plástico, levam centenas de anos para se degradar", "São sempre mais caros que os naturais", "Não podem ser moldados", "Nunca podem ser reciclados",
+      "A produção também pode poluir o ar, a água e o solo. Em compensação, têm baixo custo e são versáteis."],
+    [C_A, "De onde vem a borracha sintética?",
+      "Do petróleo", "Do látex da seringueira", "Da fava de baunilha", "Da água do mar",
+      "A natural vem do látex da seringueira. A sintética custa cerca de três vezes menos, mas se desgasta mais com o atrito."],
+    [C_A, "Só cerca de 1% dos produtos “sabor baunilha” tem a planta como ingrediente. Por que a baunilha verdadeira é tão cara?",
+      "Porque a produção é muito trabalhosa", "Porque é feita de petróleo", "Porque cresce em qualquer lugar sem cuidado", "Porque quase ninguém quer comprar",
+      "A maioria dos produtos usa aromas sintéticos, que saem muito mais baratos."],
+    [C_A, "Por que separar misturas é importante na produção de medicamentos?",
+      "Para isolar e purificar as substâncias que compõem o remédio", "Para deixar o remédio colorido", "Para que o remédio fique misturado com impurezas", "Para dispensar os testes",
+      "Os químicos usam várias técnicas de separação para isolar e purificar as substâncias dos medicamentos."],
+    [C_A, "Antes de chegar às farmácias, um medicamento precisa passar por…",
+      "testes rigorosos, para ser eficaz e seguro", "nenhum teste", "apenas uma pintura na embalagem", "um teste de cor",
+      "Os testes garantem que o medicamento seja não apenas eficaz, mas também seguro para uso."],
+    [C_A, "Como funcionam as baterias recarregáveis?",
+      "Um processo químico guarda energia elétrica e a libera quando precisamos", "Elas queimam pilhas antigas por dentro", "Elas produzem energia sem nenhum processo químico", "Elas guardam água quente",
+      "Graças à Química, as baterias podem ser recarregadas várias vezes."]
+  ];
+
+  var POOL = RAW.map(function (r) {
+    return { c: r[0], q: r[1], o: [r[2], r[3], r[4], r[5]], e: r[6] };
+  });
+
+  var GUIDE = [
+    ["Catação", "Sólidos que dá para ver e pegar", "Mãos ou pinça"],
+    ["Ventilação", "Sólido leve de sólido mais pesado", "Sopro ou vento"],
+    ["Peneiração", "Sólidos de tamanhos diferentes", "Peneira"],
+    ["Filtração", "Sólido de líquido (às vezes de gás)", "Filtro, funil, erlenmeyer"],
+    ["Levigação", "Sólidos de densidades diferentes", "Corrente de água"],
+    ["Separação magnética", "Material magnético dos demais", "Ímã"],
+    ["Decantação", "Sólido de líquido, ou líquidos, pela densidade", "Repouso"],
+    ["Centrifugação", "Partes de uma mistura heterogênea, rápido", "Rotação da centrífuga"],
+    ["Evaporação ou cristalização", "Sólido dissolvido de um líquido", "Calor: o líquido evapora"],
+    ["Fusão fracionada", "Sólidos com pontos de fusão diferentes", "Aquecimento até um dos sólidos derreter"],
+    ["Dissolução fracionada", "Sólido que dissolve de outro que não dissolve", "Água como solvente + filtração"],
+    ["Destilação simples", "Sólido dissolvido de um líquido, recuperando o líquido", "Balão e condensador"],
+    ["Destilação fracionada", "Líquidos com pontos de ebulição próximos", "Coluna de fracionamento e termômetro"]
+  ];
+
+  var TIME = 20;
+  var LETTERS = "ABCD";
+
+  /* ---------- perguntas infinitas ---------- */
+  // Pares de métodos que podem se confundir: nunca aparecem juntos como certo e errado.
+  var CONFLICT = [
+    ["Filtração", "Dissolução fracionada"], ["Filtração", "Decantação"], ["Filtração", "Peneiração"],
+    ["Evaporação ou cristalização", "Destilação simples"], ["Evaporação ou cristalização", "Destilação fracionada"],
+    ["Destilação simples", "Destilação fracionada"], ["Decantação", "Centrifugação"], ["Decantação", "Levigação"],
+    ["Catação", "Peneiração"]
+  ];
+  var SCEN = {
+    "Catação": ["tirar as pedrinhas de uma tigela de feijão usando as mãos", "separar as bolinhas azuis das brancas numa piscina de bolinhas, uma a uma", "tirar as pedras do arroz antes de cozinhar"],
+    "Ventilação": ["separar a casca do amendoim torrado usando um sopro", "separar a palha leve dos grãos mais pesados usando o vento"],
+    "Peneiração": ["separar areia fina de pedrinhas maiores", "tirar os grumos da farinha de trigo"],
+    "Filtração": ["coar o café quente, separando o pó", "separar o chá das folhas depois de ferver", "separar terra e água usando papel de filtro e funil"],
+    "Levigação": ["separar areia e ouro com uma corrente de água", "separar folhas leves de pedras pesadas usando a água da chuva"],
+    "Separação magnética": ["separar limalha de ferro misturada com areia", "retirar o ferro da sucata de lixo eletrônico"],
+    "Decantação": ["separar a terra do fundo de um copo de água parado, derramando só a água", "separar o óleo que flutua sobre a água, aproveitando a diferença de densidade"],
+    "Centrifugação": ["separar as partes sólidas do sangue para exames, com rapidez", "retirar a água das roupas na máquina de lavar"],
+    "Evaporação ou cristalização": ["obter o sal de um copo de água salgada deixado ao Sol", "obter sal nas salinas, a partir da água do mar"],
+    "Fusão fracionada": ["separar chumbo e estanho de uma liga, aquecendo até um dos metais derreter", "separar enxofre e areia aquecendo até o enxofre derreter"],
+    "Dissolução fracionada": ["separar areia e sal colocando a mistura em água e depois filtrando", "separar areia de sal de cozinha usando água como solvente"],
+    "Destilação simples": ["obter água doce da água do mar, recolhendo o vapor condensado", "separar a água do sal dissolvido usando balão de destilação e condensador"],
+    "Destilação fracionada": ["separar água e álcool etílico, que têm pontos de ebulição próximos", "separar éter e acetona misturados", "separar gasolina e diesel do petróleo"]
+  };
+  function conflicts(a, b) {
+    return CONFLICT.some(function (p) { return (p[0] === a && p[1] === b) || (p[0] === b && p[1] === a); });
+  }
+  function lc(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
+  function rnd(n) { return Math.floor(Math.random() * n); }
+  function guideOf(name) {
+    for (var i = 0; i < GUIDE.length; i++) if (GUIDE[i][0] === name) return GUIDE[i];
+    return GUIDE[0];
+  }
+  function genQuestion() {
+    var r = Math.random(), g, text;
+    if (r < 0.5) {
+      var keys = Object.keys(SCEN), m = keys[rnd(keys.length)], arr = SCEN[m];
+      g = guideOf(m);
+      text = "Qual método de separação é indicado para " + arr[rnd(arr.length)] + "?";
+    } else if (r < 0.75) {
+      g = GUIDE[rnd(GUIDE.length)];
+      text = "Pista: “" + g[2] + "”. Qual método de separação é esse?";
+    } else {
+      g = GUIDE[rnd(GUIDE.length)];
+      text = "Qual método de separação é indicado para separar " + lc(g[1]) + "?";
+    }
+    var wrong = shuffle(GUIDE.map(function (x) { return x[0]; }).filter(function (n) {
+      return n !== g[0] && !conflicts(n, g[0]);
+    })).slice(0, 3);
+    return {
+      c: C_M, q: text, o: [g[0]].concat(wrong),
+      e: g[0] + ". Separa " + lc(g[1]) + ". Ferramenta ou princípio: " + lc(g[2]) + "."
+    };
+  }
+  function nextInfinite() {
+    var q = null, tries = 0;
+    while (tries++ < 30) {
+      var cand = Math.random() < 0.4 ? POOL[rnd(POOL.length)] : genQuestion();
+      if (S.recent.indexOf(cand.q) === -1) { q = cand; break; }
+    }
+    if (!q) q = genQuestion();
+    S.recent.push(q.q);
+    if (S.recent.length > 60) S.recent.shift();
+    return prepare(q);
+  }
+  var app = document.getElementById("app");
+
+  var S = {
+    view: "start", mode: "treino", len: 10,
+    queue: [], i: 0, score: 0, streak: 0, maxStreak: 0, lives: 3,
+    answers: [], answered: false, last: null, left: TIME, timer: null, t0: 0,
+    retry: false, ended: "", record: false, infinite: false, recent: []
+  };
+
+  /* ---------- utilidades ---------- */
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function prepare(q) {
+    var opts = shuffle(q.o.map(function (t, i) { return { t: t, ok: i === 0 }; }));
+    return { c: q.c, q: q.q, o: q.o, e: q.e, opts: opts };
+  }
+  function correctText(q) { return q.o[0]; }
+  function bestKey() { return S.mode + "-" + S.len; }
+  function loadBest() {
+    try { return JSON.parse(localStorage.getItem("misturas-best") || "{}") || {}; } catch (e) { return {}; }
+  }
+  function saveBest(k, v) {
+    try { var b = loadBest(); b[k] = v; localStorage.setItem("misturas-best", JSON.stringify(b)); } catch (e) {}
+  }
+
+  /* Perfil geral: guarda apenas resultados de rodadas concluídas neste navegador. */
+  var PROFILE_KEY = "erick-misturas-profile-v1";
+  function loadProfile() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}") || {};
+      if (!Array.isArray(p.attempts)) p.attempts = [];
+      if (typeof p.totalAnswered !== "number") p.totalAnswered = 0;
+      if (typeof p.totalCorrect !== "number") p.totalCorrect = 0;
+      return p;
+    } catch (e) { return { attempts: [], totalAnswered: 0, totalCorrect: 0 }; }
+  }
+  function saveProfile(p) {
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch (e) {}
+  }
+  function profileMetrics() {
+    var p = loadProfile(), attempts = p.attempts;
+    var recent = attempts.slice(-5);
+    var allAnswers = attempts.reduce(function (n, a) { return n + a.total; }, 0);
+    var allHits = attempts.reduce(function (n, a) { return n + a.hits; }, 0);
+    var recentTotal = recent.reduce(function (n, a) { return n + a.total; }, 0);
+    var recentHits = recent.reduce(function (n, a) { return n + a.hits; }, 0);
+    var overall = allAnswers ? allHits / allAnswers : 0;
+    var recentRate = recentTotal ? recentHits / recentTotal : 0;
+    /* Dá mais peso ao desempenho recente sem apagar o histórico. */
+    var rate = allAnswers ? (recent.length >= 2 ? recentRate * 0.7 + overall * 0.3 : overall) : 0;
+    var grade = allAnswers ? Math.max(1, Math.min(10, 1 + 9 * rate)) : null;
+    var enough = attempts.length >= 3 && allAnswers >= 30;
+    var categories = {};
+    attempts.forEach(function (a) {
+      (a.categories || []).forEach(function (c) {
+        if (!categories[c.name]) categories[c.name] = { hits: 0, total: 0 };
+        categories[c.name].hits += c.hits;
+        categories[c.name].total += c.total;
+      });
+    });
+    return { p:p, attempts:attempts, allAnswers:allAnswers, allHits:allHits,
+      recent:recent, rate:rate, grade:grade, enough:enough, categories:categories };
+  }
+  function academicLabel(m) {
+    if (m.grade === null) return "Ainda sem avaliação";
+    if (!m.enough) return "Dados insuficientes";
+    if (m.grade >= 8.2) return "Bem preparado";
+    if (m.grade >= 6.4) return "Em desenvolvimento";
+    return "Precisa reforçar";
+  }
+  function sagaStage(m) {
+    var n = m.allAnswers;
+    if (n >= 80) return { level:"NÍVEL 4 — SOBERANO DA SEPARAÇÃO", title:"O nome que entrou para a história", desc:"Erick chegou ao topo. Agora precisa manter o domínio em qualquer desafio.", medal:"👑" };
+    if (n >= 50) return { level:"NÍVEL 3 — A LENDA", title:"Os laboratórios reconhecem seu nome", desc:"As missões avançadas já não o intimidam. Erick está virando referência.", medal:"🔥" };
+    if (n >= 25) return { level:"NÍVEL 2 — O ESPECIALISTA", title:"A confiança está crescendo", desc:"Erick já domina várias técnicas e começa a recuperar os setores da organização.", medal:"🧪" };
+    if (n >= 10) return { level:"NÍVEL 1 — O RECRUTA", title:"A primeira missão foi iniciada", desc:"O treinamento começou. Cada questão respondida aproxima Erick da elite científica.", medal:"⚗️" };
+    return { level:"PRÓLOGO — O CHAMADO", title:"A missão está prestes a começar", desc:"O mundo precisa de um cientista capaz de restaurar a ordem. Erick foi convocado.", medal:"🌍" };
+  }
+  function recordAttempt() {
+    var p = loadProfile();
+    var hits = S.answers.filter(function (a) { return a.ok; }).length;
+    var byCat = {};
+    S.answers.forEach(function (a) {
+      var name = a.q.c || "Outros";
+      if (!byCat[name]) byCat[name] = { name:name, hits:0, total:0 };
+      byCat[name].total++;
+      if (a.ok) byCat[name].hits++;
+    });
+    p.attempts.push({ date:Date.now(), hits:hits, total:S.answers.length,
+      mode:S.mode, categories:Object.keys(byCat).map(function (k) { return byCat[k]; }) });
+    if (p.attempts.length > 20) p.attempts = p.attempts.slice(-20);
+    p.totalAnswered += S.answers.length;
+    p.totalCorrect += hits;
+    saveProfile(p);
+  }
+  function profileHTML() {
+    var m = profileMetrics(), stage = sagaStage(m);
+    var label = academicLabel(m), pct = m.grade === null ? 0 : Math.round(m.grade * 10);
+    var status = m.grade === null ? "status-note" : !m.enough ? "status-note" : m.grade >= 8 ? "status-note good" : m.grade >= 6 ? "status-note" : "status-note bad";
+    var cats = Object.keys(m.categories);
+    var categoryHTML = cats.length ? cats.map(function (name) {
+      var c = m.categories[name], rate = c.total ? Math.round(c.hits / c.total * 100) : 0;
+      return '<div class="mastery-row"><span>' + name + '</span><span>' + rate + '% · ' + c.hits + '/' + c.total + '</span><div class="grade-track"><i style="width:' + rate + '%"></i></div></div>';
+    }).join("") : '<p class="muted">As áreas de domínio aparecerão depois das primeiras rodadas concluídas.</p>';
+    var gradeText = m.grade === null ? '—' : m.grade.toFixed(1).replace(".", ",");
+    var statusText = m.grade === null
+      ? "Ainda não há rodadas concluídas. Faça pelo menos 3 avaliações e responda 30 questões para liberar uma estimativa mais confiável."
+      : !m.enough
+        ? "Estimativa preliminar: " + label + ". Para uma leitura mais confiável, complete 3 rodadas e acumule pelo menos 30 respostas."
+        : "Estimativa baseada em " + m.allAnswers + " respostas e nas últimas 5 rodadas. Não garante aprovação: indica o nível de preparação demonstrado no quiz.";
+    return '<section class="card stack" id="perfil">' +
+      '<div class="profile-head"><div><p class="eyebrow">Perfil geral do jogador</p><h2>Erick · Painel acadêmico</h2></div><span class="pill">' + label + '</span></div>' +
+      '<div class="profile-head"><div><p class="eyebrow">Nota de preparação</p><div class="grade">' + gradeText + '<span style="font-size:20px">/10</span></div></div>' +
+      '<div style="min-width:120px;flex:1"><div class="grade-track"><i style="width:' + pct + '%"></i></div><p class="muted" style="font-size:12px;margin-top:6px">' + (m.grade === null ? "Sem dados ainda" : pct + "% do índice") + '</p></div></div>' +
+      '<div class="' + status + '">' + statusText + '</div>' +
+      '<div class="profile-grid"><div class="profile-stat"><b>' + m.attempts.length + '</b><span>RODADAS CONCLUÍDAS</span></div>' +
+      '<div class="profile-stat"><b>' + m.allAnswers + '</b><span>QUESTÕES RESPONDIDAS</span></div>' +
+      '<div class="profile-stat"><b>' + (m.allAnswers ? Math.round(m.allHits / m.allAnswers * 100) + '%' : '—') + '</b><span>ACERTO HISTÓRICO</span></div></div>' +
+      '<div><p class="eyebrow" style="margin-bottom:9px">Domínio por área</p><div class="mastery">' + categoryHTML + '</div></div>' +
+      '<p class="muted" style="font-size:12px">A nota combina 70% do desempenho recente (até 5 rodadas) e 30% do histórico. Só entram rodadas concluídas; treinos de revisão não contam. Os dados ficam salvos neste navegador.</p>' +
+      '<button class="linkbtn" data-act="resetprofile">Zerar histórico acadêmico</button>' +
+      '</section>' +
+      '<section class="card lore stack"><p class="eyebrow">Arquivo confidencial · Organização Mundial da Química</p>' +
+      '<div class="chapter"><span class="medal">' + stage.medal + '</span><div><p class="eyebrow">' + stage.level + '</p><h2>' + stage.title + '</h2><p class="muted">' + stage.desc + '</p></div></div>' +
+      '<p class="lore-quote">“Erick não está aqui para tentar. Está aqui para provar que consegue.”</p>' +
+      '<p class="muted">Ano 2047. A crise das misturas ameaça laboratórios, medicamentos, reciclagem e alimentos. Cada questão vencida recupera a confiança da organização e aproxima Erick do título de Soberano da Separação.</p></section>';
+  }
+
+  function stopTimer() { if (S.timer) { clearInterval(S.timer); S.timer = null; } }
+
+  /* ---------- partes de HTML ---------- */
+  function flask() {
+    return '<svg width="76" height="76" viewBox="0 0 64 64" aria-hidden="true">' +
+      '<path d="M24 6h16v2h-2v16l16 28a5 5 0 0 1-4.5 7.5h-35A5 5 0 0 1 10 52l16-28V8h-2z" fill="var(--surface-2)"/>' +
+      '<path d="M15.7 42h32.6L54 52a5 5 0 0 1-4.5 7.5h-35A5 5 0 0 1 10 52z" fill="var(--liquid)"/>' +
+      '<circle cx="24" cy="51" r="2.6" fill="#fff" fill-opacity=".65"/><circle cx="35" cy="47" r="2" fill="#fff" fill-opacity=".65"/><circle cx="41" cy="53" r="1.6" fill="#fff" fill-opacity=".65"/>' +
+      '<path d="M24 6h16v2h-2v16l16 28a5 5 0 0 1-4.5 7.5h-35A5 5 0 0 1 10 52l16-28V8h-2z" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>' +
+      '</svg>';
+  }
+  function drop(alive) {
+    return '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C12 2 5 10.5 5 15a7 7 0 0 0 14 0C19 10.5 12 2 12 2z" ' +
+      (alive ? 'fill="var(--liquid)" stroke="var(--liquid)"' : 'fill="none" stroke="var(--muted)" stroke-dasharray="3 2"') +
+      ' stroke-width="2" stroke-linejoin="round"/></svg>';
+  }
+  function guideHTML() {
+    return '<details class="card guide"><summary>Guia dos métodos</summary><div class="guide-grid">' +
+      GUIDE.map(function (g) {
+        return '<div class="gitem"><b>' + g[0] + '</b><span>' + g[1] + '</span><em>' + g[2] + '</em></div>';
+      }).join("") + '</div></details>';
+  }
+
+  /* ---------- telas ---------- */
+  function startHTML() {
+    var best = loadBest()[bestKey()];
+    var n = POOL.length;
+    var lens = [10, 20, "all", "inf"];
+    return '' +
+      '<header class="hero">' + flask() +
+        '<div><h1>Quiz das Misturas</h1><p>Ciências · Os bastidores da Química</p></div></header>' +
+      '<section class="card stack">' +
+        '<p class="greet">Erick, a Organização Mundial da Química convocou você. A missão começa agora.</p>' +
+        '<p class="muted">A crise de 2047 ameaça laboratórios, medicamentos, reciclagem e alimentos. Vença as missões, evolua de recruta a lenda e prove seu domínio da separação de misturas. São ' + n + ' perguntas do capítulo; cada resposta vem com explicação.</p>' +
+        '<div class="stack"><p class="eyebrow">Modo</p><div class="choices">' +
+          '<button class="choice" data-act="mode" data-v="treino" aria-pressed="' + (S.mode === "treino") + '"><strong>Treino</strong><span>Sem relógio e sem limite de erros.</span></button>' +
+          '<button class="choice" data-act="mode" data-v="desafio" aria-pressed="' + (S.mode === "desafio") + '"><strong>Desafio</strong><span>20 segundos por pergunta e 3 gotas de vida. Acerto rápido vale mais.</span></button>' +
+        '</div></div>' +
+        '<div class="stack"><p class="eyebrow">Quantas perguntas</p><div class="seg">' +
+          lens.map(function (l) {
+            return '<button data-act="len" data-v="' + l + '" aria-pressed="' + (String(S.len) === String(l)) + '">' + (l === "all" ? "Todas (" + n + ")" : l === "inf" ? "Infinito ∞" : l) + '</button>';
+          }).join("") +
+        '</div></div>' +
+        (best ? '<p class="best">Seu recorde neste formato: ' + best.score + ' pts, ' + best.hits + ' de ' + best.total + ' certas.</p>' : '') +
+        '<button class="btn" data-act="go">Começar</button>' +
+      '</section>' +
+      profileHTML() +
+      guideHTML() +
+      '<p class="foot">Baseado no material de Ciências (Matéria e Energia) do Bernoulli Sistema de Ensino.</p>';
+  }
+
+  function quizHTML() {
+    var q = S.queue[S.i], n = S.queue.length;
+    var timed = S.mode === "desafio";
+    var c = S.i + (S.answered ? 1 : 0);
+    var vmax = S.infinite ? 10 : n;
+    var vnow = S.infinite ? (c === 0 ? 0 : ((c - 1) % 10) + 1) : c;
+    var pct = Math.round(vnow / vmax * 100);
+    var lives = "";
+    if (timed) {
+      for (var k = 0; k < 3; k++) lives += drop(k < S.lives);
+    }
+    var h = '' +
+      '<div class="hud"><div class="count"><span class="sr">Pergunta </span>' + (S.infinite ? (S.i + 1) + ' · infinito' : (S.i + 1) + ' de ' + n) + '</div>' +
+        '<div class="hud-r">' +
+          (S.streak >= 2 ? '<span class="pill">Sequência x' + S.streak + '</span>' : '') +
+          '<span class="score">' + S.score + ' pts</span>' +
+          (timed ? '<span class="lives" role="img" aria-label="' + S.lives + ' de 3 vidas">' + lives + '</span>' : '') +
+          '<button class="linkbtn" data-act="' + (S.infinite ? "end" : "quit") + '">' + (S.infinite ? "Encerrar" : "Sair") + '</button>' +
+        '</div></div>' +
+      '<div class="tube" role="progressbar" aria-valuemin="0" aria-valuemax="' + vmax + '" aria-valuenow="' + vnow + '" aria-label="Progresso"><i style="width:' + pct + '%"></i></div>';
+    if (timed) {
+      h += '<div class="timer"><div class="track"><div class="bar' + (S.left <= 5 ? ' low' : '') + '" id="tbar" style="width:' + (S.left / TIME * 100) + '%"></div></div><b id="tnum">' + Math.ceil(S.left) + '</b><span class="muted">s</span></div>';
+    }
+    h += '<section class="card" id="qcard" tabindex="-1">' +
+      '<p class="eyebrow">' + q.c + '</p><h2 class="qtext">' + q.q + '</h2><div class="opts" role="group" aria-label="Alternativas">';
+    q.opts.forEach(function (o, i) {
+      var cls = "";
+      if (S.answered) {
+        if (o.ok) cls = " ok";
+        else if (i === S.last.chosen) cls = " bad";
+        else cls = " dim";
+      }
+      h += '<button class="opt' + cls + '" data-act="pick" data-i="' + i + '"' + (S.answered ? " disabled" : "") + '>' +
+        '<span class="chip">' + LETTERS[i] + '</span><span>' + o.t + '</span></button>';
+    });
+    h += '</div>';
+    if (S.answered) {
+      var L = S.last, last = isLast();
+      h += '<div class="fb ' + (L.ok ? "good" : "bad") + '" role="status">' +
+        '<p class="fb-title">' + (L.ok ? "Certo! +" + L.pts + " pts" : (L.timeout ? "O tempo acabou" : "Quase!")) + '</p>' +
+        (L.ok ? "" : '<p>Resposta certa: <strong>' + correctText(q) + '</strong></p>') +
+        '<p>' + q.e + '</p></div>' +
+        '<button class="btn next" data-act="next">' + (last ? "Ver resultado" : "Próxima pergunta") + '</button>';
+    }
+    h += '</section>';
+    return h;
+  }
+
+  function resultHTML() {
+    var total = S.answers.length;
+    var hits = S.answers.filter(function (a) { return a.ok; }).length;
+    var pct = total ? Math.round(hits / total * 100) : 0;
+    var rank, msg;
+    if (pct >= 90) { rank = "Mestre do Laboratório"; msg = "Você dominou os métodos de separação."; }
+    else if (pct >= 70) { rank = "Cientista"; msg = "Muito bom! Falta pouco para dominar tudo."; }
+    else if (pct >= 50) { rank = "Assistente de Laboratório"; msg = "Bom caminho. Revise os erros abaixo e jogue de novo."; }
+    else { rank = "Aprendiz de Laboratório"; msg = "Comece pelo guia dos métodos e treine só os erros."; }
+    var misses = S.answers.filter(function (a) { return !a.ok; });
+    var h = '<section class="card" id="qcard" tabindex="-1">' +
+      '<p class="eyebrow">' + (S.ended === "lives" ? "As gotas acabaram" : "Fim da rodada") + '</p>' +
+      '<h2 class="rank">' + rank + '</h2><p class="muted">' + msg + '</p>' +
+      '<div class="stats">' +
+        '<div class="stat"><b>' + hits + '/' + total + '</b><span>Acertos</span></div>' +
+        '<div class="stat"><b>' + S.score + '</b><span>Pontos' + (S.record ? ' · novo recorde' : '') + '</span></div>' +
+        '<div class="stat"><b>' + S.maxStreak + '</b><span>Maior sequência</span></div>' +
+      '</div>' +
+      '<div class="actions">' +
+        '<button class="btn" data-act="again">Jogar de novo</button>' +
+        (misses.length ? '<button class="btn ghost" data-act="retry">Treinar só os ' + misses.length + ' erro' + (misses.length > 1 ? 's' : '') + '</button>' : '') +
+      '</div></section>';
+    if (misses.length) {
+      h += '<section class="card"><h3>Para revisar</h3><ul class="review">' +
+        misses.map(function (a) {
+          return '<li><p class="rq">' + a.q.q + '</p><p class="ra">Resposta certa: ' + correctText(a.q) + '</p><p class="re">' + a.q.e + '</p></li>';
+        }).join("") + '</ul></section>';
+    }
+    h += guideHTML();
+    return h;
+  }
+
+  /* ---------- fluxo ---------- */
+  function isLast() {
+    if (S.mode === "desafio" && S.lives <= 0) return true;
+    if (S.infinite) return false;
+    return S.i + 1 >= S.queue.length;
+  }
+  function begin(pool, retry) {
+    S.infinite = !pool && S.len === "inf";
+    S.recent = [];
+    if (S.infinite) {
+      S.queue = [nextInfinite()];
+    } else {
+      var base = pool || shuffle(POOL).slice(0, S.len === "all" ? POOL.length : S.len);
+      S.queue = shuffle(base).map(prepare);
+    }
+    S.i = 0; S.score = 0; S.streak = 0; S.maxStreak = 0; S.lives = 3;
+    S.answers = []; S.answered = false; S.last = null; S.left = TIME;
+    S.retry = !!retry; S.ended = ""; S.record = false;
+    S.view = "quiz";
+    render();
+  }
+  function pick(i) {
+    if (S.answered || S.view !== "quiz") return;
+    stopTimer();
+    var q = S.queue[S.i];
+    var ok = i >= 0 && q.opts[i].ok;
+    var pts = 0;
+    if (ok) {
+      S.streak++;
+      pts = 100;
+      if (S.mode === "desafio") pts += Math.round(50 * (S.left / TIME));
+      if (S.streak >= 2) pts += Math.min(S.streak - 1, 5) * 10;
+      S.score += pts;
+      if (S.streak > S.maxStreak) S.maxStreak = S.streak;
+    } else {
+      S.streak = 0;
+      if (S.mode === "desafio") S.lives--;
+    }
+    S.answers.push({ q: q, chosen: i, ok: ok, timeout: i < 0, pts: pts });
+    S.answered = true;
+    S.last = { ok: ok, pts: pts, timeout: i < 0, chosen: i };
+    render();
+  }
+  function next() {
+    if (!S.answered) return;
+    if (isLast()) { finish(); return; }
+    if (S.infinite) S.queue.push(nextInfinite());
+    S.i++; S.answered = false; S.last = null; S.left = TIME;
+    render();
+  }
+  function finish() {
+    stopTimer();
+    if (S.mode === "desafio" && S.lives <= 0) S.ended = "lives";
+    if (!S.retry && !S.infinite && S.answers.length) {
+      recordAttempt();
+    }
+    if (!S.retry) {
+      var hits = S.answers.filter(function (a) { return a.ok; }).length;
+      var prev = loadBest()[bestKey()];
+      if (!prev || S.score > prev.score) {
+        S.record = !!prev || S.score > 0;
+        saveBest(bestKey(), { score: S.score, hits: hits, total: S.answers.length });
+      }
+    }
+    S.view = "result";
+    render();
+  }
+  function startTimer() {
+    stopTimer();
+    if (S.mode !== "desafio") return;
+    S.t0 = performance.now();
+    S.timer = setInterval(function () {
+      var left = Math.max(0, TIME - (performance.now() - S.t0) / 1000);
+      S.left = left;
+      var b = document.getElementById("tbar"), n = document.getElementById("tnum");
+      if (b) { b.style.width = (left / TIME * 100) + "%"; if (left <= 5) b.classList.add("low"); }
+      if (n) n.textContent = Math.ceil(left);
+      if (left <= 0) pick(-1);
+    }, 100);
+  }
+
+  function render() {
+    var firstOfScreen = true;
+    if (S.view === "start") app.innerHTML = startHTML();
+    else if (S.view === "quiz") { app.innerHTML = quizHTML(); firstOfScreen = !S.answered; }
+    else app.innerHTML = resultHTML();
+
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (S.view === "quiz" && S.answered) {
+      var fb = app.querySelector(".fb");
+      if (fb && fb.scrollIntoView) fb.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
+    } else if (firstOfScreen) {
+      window.scrollTo(0, 0);
+      var c = document.getElementById("qcard");
+      if (c) c.focus({ preventScroll: true });
+    }
+    if (S.view === "quiz" && !S.answered) startTimer();
+  }
+
+  /* ---------- eventos ---------- */
+  app.addEventListener("click", function (e) {
+    var el = e.target.closest("[data-act]");
+    if (!el) return;
+    var a = el.getAttribute("data-act"), v = el.getAttribute("data-v");
+    if (a === "mode") { S.mode = v; render(); }
+    else if (a === "len") { S.len = (v === "all" || v === "inf") ? v : Number(v); render(); }
+    else if (a === "go" || a === "again") { if (a === "again") { S.view = "start"; render(); } else begin(); }
+    else if (a === "pick") pick(Number(el.getAttribute("data-i")));
+    else if (a === "next") next();
+    else if (a === "retry") {
+      var wrong = S.answers.filter(function (x) { return !x.ok; }).map(function (x) { return x.q; });
+      begin(wrong, true);
+    }
+    else if (a === "quit") { stopTimer(); S.view = "start"; render(); }
+    else if (a === "resetprofile") {
+      if (window.confirm("Zerar todo o histórico acadêmico do Erick neste navegador?")) {
+        try { localStorage.removeItem(PROFILE_KEY); } catch (e) {}
+        render();
+      }
+    }
+    else if (a === "end") {
+      if (S.answers.length) finish();
+      else { stopTimer(); S.view = "start"; render(); }
+    }
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (S.view !== "quiz") return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var isBtn = e.target && e.target.tagName === "BUTTON";
+    if (!S.answered) {
+      var k = e.key.toLowerCase();
+      var idx = "1234".indexOf(k);
+      if (idx < 0) idx = "abcd".indexOf(k);
+      if (idx > -1 && k.length === 1) { e.preventDefault(); pick(idx); }
+    } else if ((e.key === "Enter" || e.key === " ") && !isBtn) {
+      e.preventDefault(); next();
+    }
+  });
+
+  render();
+})();
+</script>
+
+</body></html>
